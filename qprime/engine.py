@@ -147,12 +147,8 @@ def check_unitarity(rho):
 
 
 @nb.njit(parallel=True)
-def build_state(n):
+def atkin(n):
     """ Computes prime numbers using the sieve of Atkin up to 2**n.
-    The prime numbers are not stored in memory, instead the state
-    matrix is computed from the sieve mask.
-
-    This algoritm works only for even n.
 
     Parameters
     ----------
@@ -160,9 +156,7 @@ def build_state(n):
 
     Returns
     -------
-        The binary matrix containing the encoded primes.
-        The total number of generated prime numbers.
-
+        The sieve matrix.
     """
     limit = 2**n
     sieve = np.zeros(limit, dtype=np.ubyte)
@@ -197,7 +191,29 @@ def build_state(n):
             for i in range(r * r, limit, r * r):
                 sieve[i] = 0
         r += 1
-    # Print primes
+
+    return sieve
+
+
+@nb.njit(parallel=True)
+def build_state(n):
+    """ Computes prime numbers using the sieve of Atkin up to 2**n.
+    The prime numbers are not stored in memory, instead the state
+    matrix is computed from the sieve mask.
+
+    This algoritm works only for even n.
+
+    Parameters
+    ----------
+        `n`: the number of qbits for the system
+
+    Returns
+    -------
+        The binary matrix containing the encoded primes.
+        The total number of generated prime numbers.
+    """
+    limit = 2**n
+    sieve = atkin(n)
     norm = np.int64(2**(n/2))
     pp = np.zeros(shape=(norm, norm//2), dtype=np.int32)
     pp[0,0] = 1 # 2
@@ -211,3 +227,34 @@ def build_state(n):
             pp[a, b] = 1
             size += 1
     return pp, size
+
+
+@nb.njit(parallel=True)
+def build_trace(n):
+    sieve = atkin(n)
+    def diff(p):
+        return (p-1)/(p-2)
+    def C(h):
+        c2 = 0.66016181584686957392
+        prod = 1
+        if h % 2 != 0:
+            prod = 0
+        else:
+            p = [3, 5]
+            prod = 1
+            if h % 3 == 0:
+                prod *= diff(3)
+            if h % 5 == 0:
+                prod *= diff(5)
+            for i in range(7, h, 2):
+                if sieve[i] == 1:
+                    if h % i == 0:
+                        prod *= diff(i)
+        return 2*c2*prod
+    m = 2**(n//2-1)
+    M = np.zeros(shape=(m,m), dtype=np.float64)
+    for i in nb.prange(m):
+        for j in range(i+1, m):
+            M[i,j] = C(2*np.abs(i-j))
+            M[j,i] = M[i,j]
+    return M
