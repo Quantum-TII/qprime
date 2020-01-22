@@ -26,7 +26,7 @@ class timer:
         print("%fs (wall) | %fs (cpu) - %s" % (d0, d1, message))
 
 
-def entropy(n, verbose=True):
+def entropy(n):
     """ Computes the prime number entropy.
 
     Parameters
@@ -40,7 +40,8 @@ def entropy(n, verbose=True):
     """
     # build the state
     t = timer()
-    t_b = t
+    t_b = timer()
+    t_b.start()
     t.start()
     pp, size = build_state(n)
     t.print('prime number generation [1/4]')
@@ -62,8 +63,7 @@ def entropy(n, verbose=True):
     purity = compute_purity(w)
     t.print('entropy [4/4]')
 
-    if verbose:
-        t_b.print('total execution time')
+    t_b.print('total execution time')
 
     return entropy.numpy(), unitarity.numpy(), purity.numpy(), w.numpy()
 

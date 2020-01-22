@@ -37,7 +37,7 @@ setup(name=PACKAGE,
       install_requires=[
           'numpy',
           'numba>=0.47',
-          'tensorflow>=2',
+#          'tensorflow',
       ],
       python_requires='>=3.6'
 )
