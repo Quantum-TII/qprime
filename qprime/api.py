@@ -5,6 +5,7 @@ import time
 import numba as nb
 import numpy as np
 import tensorflow as tf
+import mpmath as mp
 from qprime.engine import build_state, make_density_matrix, \
                           check_purity, check_unitarity, \
                           compute_entropy, compute_purity, \
@@ -66,6 +67,55 @@ def entropy(n):
     t_b.print('total execution time')
 
     return entropy.numpy(), unitarity.numpy(), purity.numpy(), w.numpy()
+
+
+def entropy_mpf(n, bits=113):
+    """ Computes the prime number entropy.
+
+    Parameters
+    ----------
+        `n`: number of qbits
+        `bits`: number of bits for precision.
+
+    Return
+    ------
+        The entropy, unitarity and purity.
+    """
+    # build the state
+    t = timer()
+    t_b = timer()
+    t_b.start()
+    t.start()
+    pp, size = build_state(n)
+    t.print('prime number generation [1/4]')
+
+    # build the density
+    t.start()
+    rho = make_density_matrix(pp, 1)
+    mp.mp.prec = bits
+    print(mp.mp)
+    rho = mp.matrix(rho.numpy()) / mp.mpf(size)
+    t.print('density construction [2/4]')
+
+    #print(check_purity(rho), check_unitarity(rho))
+
+    t.start()
+    w = mp.eigsy(rho, eigvals_only=True)
+    w = np.array(w)
+    wf = w[w > mp.mpf('0')]
+    t.print('eigenvalues [3/4]')
+
+    t.start()
+    entropy = 0
+    for i in wf:
+        entropy -= i*mp.log(i)
+    entropy /= mp.log(2)
+    t.print('entropy [4/4]')
+
+    t_b.print('total execution time')
+
+    return entropy
+
 
 
 @nb.njit
