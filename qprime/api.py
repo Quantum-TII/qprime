@@ -53,7 +53,7 @@ def entropy(n, verbose=True):
     #print(check_purity(rho), check_unitarity(rho))
 
     t.start()
-    w = get_eigenvalues(rho)
+    w = get_eigenvalues(rho, 0)
     t.print('eigenvalues [3/4]')
 
     t.start()
@@ -65,7 +65,7 @@ def entropy(n, verbose=True):
     if verbose:
         t_b.print('total execution time')
 
-    return entropy.numpy(), unitarity.numpy(), purity.numpy()
+    return entropy.numpy(), unitarity.numpy(), purity.numpy(), w.numpy()
 
 
 @nb.njit

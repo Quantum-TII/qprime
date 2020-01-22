@@ -7,7 +7,7 @@ from qprime.api import entropy
 
 
 def main(n):
-    e, p, u = entropy(n)
+    e, p, u, w = entropy(n)
     print('\n> Final entropy for %d qubit primes is %.10e <\n' % (n, e))
 
 
