@@ -93,21 +93,38 @@ struct NumTraits<__float128>
 };
 } // namespace Eigen
 
+#include <mpack/mblas___float128.h>
+#include <mpack/mlapack___float128.h>
+
 std::string entropy(const Eigen::MatrixXi &rho, int size)
 {
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix<__float128, Eigen::Dynamic, Eigen::Dynamic> > es;
-  es.compute(rho.cast<__float128>());
-  const auto w = es.eigenvalues();
+  mpackint n = rho.rows();
+  __float128 *w = new __float128[n];
+  //work space query
+  mpackint lwork = -1, info;
+  __float128 *work = new __float128[1];
+  Eigen::Matrix<__float128, Eigen::Dynamic, Eigen::Dynamic> a = rho.cast<__float128>();
+  __float128 *A = a.data();
+  Rsyev("N", "U", n, A, n, w, work, lwork, &info);
+  lwork = (int) work[0];
+  delete[] work;
+  work = new __float128[std::max((mpackint) 1, lwork)];
+  //inverse matrix
+  Rsyev("N", "U", n, A, n, w, work, lwork, &info);
+  delete[] work;
+
   __float128 e = 0.0q;
-  for (size_t i = 0; i < w.size(); i++)
+  for (size_t i = 0; i < n; i++)
   {
-    if (w(i) > 0)
+    if (w[i] > 0)
     {
-      auto ww = w(i) / __float128(size);
+      auto ww = w[i] / __float128(size);
       e -= ww * logq(ww);
     }
   }
   e /= logq(2);
+
+  delete[] w;
 
   std::stringstream r("");
   r.precision(33);
