@@ -23,6 +23,7 @@ inline std::ostream &operator<<(std::ostream &out, __float128 f)
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
 namespace Eigen
 {
 template <>
@@ -92,16 +93,19 @@ struct NumTraits<__float128>
 };
 } // namespace Eigen
 
-std::string entropy(Eigen::MatrixXi &rho, int size)
+std::string entropy(const Eigen::MatrixXi &rho, int size)
 {
-  auto normrho = rho.cast<__float128>();
-  const auto w = normrho.eigenvalues();
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix<__float128, Eigen::Dynamic, Eigen::Dynamic> > es;
+  es.compute(rho.cast<__float128>());
+  const auto w = es.eigenvalues();
   __float128 e = 0.0q;
   for (size_t i = 0; i < w.size(); i++)
   {
-    auto ww = real(w(i)) / __float128(size);
-    if (ww > 0)
+    if (w(i) > 0)
+    {
+      auto ww = w(i) / __float128(size);
       e -= ww * logq(ww);
+    }
   }
   e /= logq(2);
 
