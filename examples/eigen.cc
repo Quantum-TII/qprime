@@ -4,11 +4,6 @@
 #include <quadmath.h>
 namespace std
 {
-inline __float128 sqrt(__float128 x) { return sqrtq(x); }
-inline __float128 log(__float128 x) { return logq(x); }
-inline __float128 log10(__float128 x) { return log10q(x); }
-inline __float128 ceil(__float128 x) { return ceilq(x); }
-inline __float128 isfinite(__float128 x) { return x - x == 0; }
 inline std::ostream &operator<<(std::ostream &out, __float128 f)
 {
   char buf[200];
@@ -21,90 +16,22 @@ inline std::ostream &operator<<(std::ostream &out, __float128 f)
 } // namespace std
 
 #include <pybind11/pybind11.h>
-#include <pybind11/eigen.h>
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
-namespace Eigen
-{
-template <>
-struct NumTraits<__float128>
-{
-  enum
-  {
-    IsInteger = 0,
-    IsSigned = 1,
-    IsComplex = 0,
-    RequireInitialization = 1,
-    ReadCost = 1,
-    AddCost = 1,
-    MulCost = 1
-  };
-
-  typedef __float128 Real;
-  typedef typename internal::conditional<
-      IsInteger,
-      typename internal::conditional<sizeof(__float128) <= 2, float, double>::type,
-      __float128>::type NonInteger;
-  typedef __float128 Nested;
-  typedef __float128 Literal;
-
-  EIGEN_DEVICE_FUNC
-  static inline Real epsilon()
-  {
-    return FLT128_EPSILON;
-  }
-
-  EIGEN_DEVICE_FUNC
-  static inline int digits10()
-  {
-    return 33;
-  }
-
-  EIGEN_DEVICE_FUNC
-  static inline Real dummy_precision()
-  {
-    // make sure to override this for floating-point types
-    return 1e-33;
-  }
-
-  EIGEN_DEVICE_FUNC
-  static inline __float128 highest()
-  {
-    return FLT128_MAX;
-  }
-
-  EIGEN_DEVICE_FUNC
-  static inline __float128 lowest()
-  {
-    return -FLT128_MAX;
-  }
-
-  EIGEN_DEVICE_FUNC
-  static inline __float128 infinity()
-  {
-    return 1.0q / 0.0q;
-  }
-
-  EIGEN_DEVICE_FUNC
-  static inline __float128 quiet_NaN()
-  {
-    return nanq("nan");
-  }
-};
-} // namespace Eigen
-
+#include <pybind11/numpy.h>
 #include <mpack/mblas___float128.h>
 #include <mpack/mlapack___float128.h>
 
-std::string entropy(const Eigen::MatrixXi &rho, int size)
+namespace py = pybind11;
+
+std::string entropy(const py::array_t<int, py::array::c_style> &rho, int size)
 {
-  mpackint n = rho.rows();
+  py::buffer_info buf1 = rho.request();
+  mpackint n = buf1.shape[0];
   __float128 *w = new __float128[n];
   //work space query
   mpackint lwork = -1, info;
   __float128 *work = new __float128[1];
-  Eigen::Matrix<__float128, Eigen::Dynamic, Eigen::Dynamic> a = rho.cast<__float128>();
-  __float128 *A = a.data();
+  __float128 *A = new __float128[buf1.size];
+  for (int i = 0; i < buf1.size; i++) A[i] = (__float128)((int*)buf1.ptr)[i];
   Rsyev("N", "U", n, A, n, w, work, lwork, &info);
   lwork = (int) work[0];
   delete[] work;
@@ -125,6 +52,7 @@ std::string entropy(const Eigen::MatrixXi &rho, int size)
   e /= logq(2);
 
   delete[] w;
+  delete[] A;
 
   std::stringstream r("");
   r.precision(33);
@@ -136,7 +64,6 @@ std::string entropy(const Eigen::MatrixXi &rho, int size)
 // ----------------
 // Python interface
 // ----------------
-namespace py = pybind11;
 
 PYBIND11_MODULE(eigen, m)
 {
