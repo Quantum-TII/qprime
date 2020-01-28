@@ -17,6 +17,7 @@ def main(n):
     rho = tf.linalg.matmul(tf.transpose(pp), pp)
 
     # send rho and size to the quadruple eigen implementation
+    print('Starting eigen.so:')
     e = eigen.entropy(rho, size)
 
     print('\n> Final entropy', e)
