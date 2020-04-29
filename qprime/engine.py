@@ -215,15 +215,14 @@ def build_state(n):
     limit = 2**n
     sieve = atkin(n)
     norm = np.int64(2**(n/2))
-    pp = np.zeros(shape=(norm, norm//2), dtype=np.int32)
-    pp[0,0] = 1 # 2
-    pp[0,1] = 1 # 3
+    pp = np.zeros(shape=(norm, norm), dtype=np.int32)
+    pp[0,2] = 1 # 2
+    pp[0,3] = 1 # 3
     size = 2
     for i in range(5, limit, 2):
         if sieve[i] == 1:
             b = np.int64(i % norm)
             a = np.int64((i - b) / norm)
-            b = np.int64((b-1)/2)
             pp[a, b] = 1
             size += 1
     return pp, size
