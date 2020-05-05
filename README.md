@@ -1,3 +1,7 @@
+
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3787043.svg)](https://doi.org/10.5281/zenodo.3787043)
+
 # QPrime
 
 Compute entropy and trace of prime number sequences based on qbit states.
