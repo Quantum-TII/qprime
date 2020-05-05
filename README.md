@@ -19,19 +19,22 @@ pip install .
 
 We have placed examples in the `examples` folder:
 ```bash
-usage: primes.py [-h] n
-primes.py: error: the following arguments are required: n
+usage: primes.py [-h] nqubits
 ```
 computes the prime numbers for quantum bits.
 
+If quadruple precision is needed you can run the example:
 ```bash
-usage: reference_trace.py [-h] s n
-reference_trace.py: error: the following arguments are required: s, n
+usage: primes_quad_mplapack.py [-h] nqubits
 ```
-compute the reference trace for state (s, n).
+after compiling the respective c++ code with `make`.
 
 ```bash
-usage: traces.py [-h] s n
-traces.py: error: the following arguments are required: s, n
+usage: reference_trace.py [-h] pows nqubits
 ```
-computes the trace for a state (s, n)
+compute the reference trace for state (pows, nqubits).
+
+```bash
+usage: traces.py [-h] pows nqubits
+```
+computes the trace for a state (pows, nqubits).
